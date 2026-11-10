@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c1f13">
+<title>⚽ 1000 Touches</title>
+<style>
+:root{
+  --bg:#f2f5f2; --card:#ffffff; --ink:#101d14; --muted:#5b6f60; --line:#e2e8e2;
+  --green:#1fa15c; --green-d:#0e7a41; --orange:#ff9f0a; --red:#e0393e;
+  --grad:linear-gradient(135deg,#143c24,#0c1f13);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+#app{max-width:480px;margin:0 auto;padding:14px 14px calc(24px + env(safe-area-inset-bottom))}
+h1.logo{font-size:1.35rem;letter-spacing:-.02em;margin:6px 0 14px}
+.view{display:none}.view.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:12px;
+  padding:12px 16px;font-size:.95rem;font-weight:600;cursor:pointer}
+.btn:active{transform:scale(.97)}
+.btn.green{background:var(--green);border-color:var(--green);color:#fff}
+.btn.orange{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:800}
+.btn.red{background:#fdecec;border-color:#f4c7c9;color:#a8252a}
+.btn.ghost{background:#f6f8f6}
+.btn.small{padding:8px 12px;font-size:.85rem}
+.btn.grow{flex:1}
+.row{display:flex;gap:8px;align-items:center}
+.small{font-size:.78rem;color:var(--muted)}
+.center{text-align:center}
+/* Hero */
+.hero{background:var(--grad);color:#fff;border:none;position:relative;overflow:hidden}
+.hero h2{margin:0 0 2px;font-size:1.02rem;font-weight:700;opacity:.92}
+.bignum{font-size:3rem;font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.bignum small{font-size:1rem;font-weight:600;opacity:.7}
+.pbar{height:12px;border-radius:8px;background:rgba(255,255,255,.18);margin-top:10px;overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#ffd24a,#ff9f0a);transition:width .4s}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.stat b{display:block;font-size:1.15rem}
+.xpbar{height:8px;border-radius:6px;background:#e6ece6;margin-top:8px;overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--green);border-radius:6px}
+/* Uebungen */
+.exrow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:12px;margin:8px 0}
+.exrow .ic{font-size:1.5rem}
+.exrow .t{flex:1;min-width:0}
+.exrow .t b{display:block;overflow-wrap:anywhere}
+input[type=text],input[type=number],select{font-size:1rem;padding:11px 12px;border:1px solid var(--line);
+  border-radius:12px;background:#fff;width:100%;color:var(--ink)}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--green)}
+/* Training */
+.tstage{text-align:center}
+.tvidwrap{background:#000;border-radius:18px;overflow:hidden;aspect-ratio:9/14;max-height:46vh;
+  display:flex;align-items:center;justify-content:center;position:relative}
+.tvidwrap video{width:100%;height:100%;object-fit:contain}
+.tvidwrap .novid{color:#8ba592;font-size:2.6rem}
+.tname{font-weight:800;font-size:1.05rem;margin:10px 0 2px}
+.bigcount{font-size:4.2rem;font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.bigcount small{font-size:1.1rem;color:var(--muted);font-weight:600}
+.hitzone{width:100%;padding:26px 0;margin-top:10px;border-radius:20px;border:none;cursor:pointer;
+  background:var(--green);color:#fff;font-size:1.3rem;font-weight:800;letter-spacing:.02em;
+  box-shadow:0 6px 0 var(--green-d);transition:transform .05s}
+.hitzone:active{transform:translateY(4px);box-shadow:0 2px 0 var(--green-d)}
+.hitzone.pop{animation:pop .18s}
+@keyframes pop{50%{transform:scale(1.03)}}
+.oupbar{height:14px;border-radius:8px;background:#dfe7df;overflow:hidden;margin:10px 0 2px}
+.oupbar i{display:block;height:100%;background:linear-gradient(90deg,#35c279,#1fa15c);border-radius:8px;transition:width .2s}
+.oupbar.ziel i{background:linear-gradient(90deg,#ffd24a,#ff9f0a)}
+/* Toast */
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);opacity:0;
+  background:#101d14;color:#fff;padding:12px 20px;border-radius:999px;font-weight:700;font-size:.95rem;
+  transition:.25s;pointer-events:none;z-index:60;max-width:90vw;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Confetti */
+#cf{position:fixed;inset:0;pointer-events:none;z-index:70;display:none}
+/* Ende */
+.endemoji{font-size:4rem;text-align:center}
+.badgerow{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.badge{background:#f4efe2;border:1px solid #e6d9b8;border-radius:999px;padding:5px 12px;font-size:.82rem;font-weight:700}
+video.prev{width:100%;border-radius:12px;margin-top:8px;background:#000}
+.vwrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.85rem;background:#fff;cursor:pointer}
+.chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.stickybottom{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:14px 0 2px;margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div class="view active" id="v-home">
+    <h1 class="logo">⚽ 1000 Touches</h1>
+    <div class="card hero">
+      <h2>Heute</h2>
+      <div class="bignum" id="h-count">0 <small>/ 1000</small></div>
+      <div class="pbar"><i id="h-bar" style="width:0%"></i></div>
+      <div class="small" id="h-quote" style="color:#c8d8cc;margin-top:8px"></div>
+    </div>
+    <div class="statgrid">
+      <div class="stat"><b id="h-streak">0</b><span class="small">🔥 Tage Serie</span></div>
+      <div class="stat"><b id="h-level">1</b><span class="small">⭐ Level</span></div>
+      <div class="stat"><b id="h-total">0</b><span class="small">💪 Touches total</span></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;font-size:.85rem">
+        <b id="h-lvlname">Anfänger</b><span class="small" id="h-xptxt"></span>
+      </div>
+      <div class="xpbar"><i id="h-xpbar" style="width:0%"></i></div>
+    </div>
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+      <button class="btn orange" id="home-mix" style="padding:16px;font-size:1.1rem">🚀 1000er-Mix starten</button>
+      <button class="btn" id="home-pick">🎯 Eigene Auswahl trainieren</button>
+      <div class="row">
+        <button class="btn ghost grow" id="home-editor">📋 Übungen</button>
+        <button class="btn ghost grow" id="home-log">📈 Log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAINING -->
+  <div class="view" id="v-train">
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn ghost small" id="t-abort">← Abbrechen</button>
+      <span style="flex:1"></span>
+      <span class="small" id="t-oftxt"></span>
+    </div>
+    <div class="tstage">
+      <div class="tvidwrap"><span class="novid" id="t-novid">⚽</span><video id="t-vid" autoplay muted loop playsinline style="display:none"></video></div>
+      <div class="tname" id="t-exname"></div>
+      <div class="small" id="t-exreps"></div>
+      <div class="bigcount"><span id="t-cur">0</span><small id="t-goal">/100</small></div>
+      <div class="oupbar"><i id="t-exbar" style="width:0%"></i></div>
+      <div class="small" style="margin-bottom:4px">Gesamt heute: <b id="t-total">0</b>/1000</div>
+      <div class="oupbar ziel"><i id="t-totbar" style="width:0%"></i></div>
+      <button class="hitzone" id="t-hit">+ BERÜHRUNG</button>
+      <div class="row" style="margin-top:10px">
+        <button class="btn ghost small" id="t-undo">↺ Eine weniger</button>
+        <span style="flex:1"></span>
+        <button class="btn ghost small" id="t-skip">Übung überspringen →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SESSION ENDE -->
+  <div class="view" id="v-end">
+    <div class="card" style="padding:20px 14px">
+      <div class="endemoji" id="e-emoji">🏆</div>
+      <h2 class="center" id="e-title" style="margin:6px 0 2px">Geschafft!</h2>
+      <p class="center small" id="e-sub"></p>
+      <div class="statgrid" style="margin-top:14px">
+        <div class="stat"><b id="e-touches">0</b><span class="small">Ballberührungen</span></div>
+        <div class="stat"><b id="e-xp">+0</b><span class="small">XP</span></div>
+        <div class="stat"><b id="e-streak">0</b><span class="small">🔥 Serie</span></div>
+      </div>
+      <div class="badgerow" id="e-badges"></div>
+      <div class="center" id="e-levelup" style="display:none;margin-top:12px">
+        <span class="badge" style="background:#e3f6ea;border-color:#bfe8d0;color:var(--green-d);font-size:1rem">⭐ LEVEL-UP!</span>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px">
+      <button class="btn orange" id="e-again">Noch eine Session! 🔁</button>
+      <button class="btn ghost" id="e-home">Nach Hause</button>
+    </div>
+  </div>
+
+  <!-- UEBUNGS-AUSWAHL -->
+  <div class="view" id="v-pick">
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn ghost small" data-home>← Home</button>
+      <h2 style="margin:0;flex:1;text-align:center;font-size:1.05rem">🎯 Übungen wählen</h2>
+      <span style="width:82px"></span>
+    </div>
+    <p class="small">Wähle deine Übungen — du mischst sie selbst bis 1000 Berührungen.</p>
+    <div id="pk-list"></div>
+    <div class="stickybottom">
+      <button class="btn orange" id="pk-start" style="width:100%">Training starten</button>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div class="view" id="v-editor">
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn ghost small" data-home>← Home</button>
+      <h2 style="margin:0;flex:1;text-align:center;font-size:1.05rem">📋 Übungen</h2>
+      <span style="width:82px"></span>
+    </div>
+    <button class="btn green" id="ed-new" style="width:100%">＋ Neue Übung</button>
+    <div id="ed-list" style="margin-top:10px"></div>
+    <p class="small" style="margin-top:12px">💡 Tipp: Film die Übung kurz mit dem Handy (z.B. 10–20 Sekunden) und lade sie hoch — so siehst du bei jeder Session genau, wie's geht.</p>
+  </div>
+
+  <!-- EDITOR-FORM -->
+  <div class="view" id="v-edit">
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn ghost small" id="ef-back">← Zurück</button>
+      <h2 style="margin:0;flex:1;text-align:center;font-size:1.05rem" id="ef-title">Neue Übung</h2>
+      <span style="width:82px"></span>
+    </div>
+    <div class="card">
+      <label class="small">Name</label>
+      <input type="text" id="ef-name" placeholder="z.B. Sohlenwippen" style="margin-top:6px">
+      <label class="small" style="margin-top:10px;display:block">Ballberührungen pro Satz (100–300)</label>
+      <input type="number" id="ef-reps" min="100" max="300" step="10" value="150" style="margin-top:6px">
+      <label class="small" style="margin-top:10px;display:block">Symbol</label>
+      <div class="vwrap" id="ef-emos"></div>
+      <label class="small" style="margin-top:12px;display:block">Video (Handy-Kamera oder Galerie)</label>
+      <div class="row" style="margin-top:6px;flex-wrap:wrap">
+        <button class="btn ghost small grow" id="ef-filebtn">🎬 Video wählen</button>
+        <input type="file" id="ef-file" accept="video/*" capture="environment" style="display:none">
+      </div>
+      <video class="prev" id="ef-prev" style="display:none" muted loop playsinline controls></video>
+      <div class="small" id="ef-vidinfo" style="margin-top:4px"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn green grow" id="ef-save">Speichern ✅</button>
+      <button class="btn red" id="ef-del" style="display:none">🗑</button>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="view" id="v-log">
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn ghost small" data-home>← Home</button>
+      <h2 style="margin:0;flex:1;text-align:center;font-size:1.05rem">📈 Trainingslog</h2>
+      <span style="width:82px"></span>
+    </div>
+    <div class="statgrid">
+      <div class="stat"><b id="lg-sessions">0</b><span class="small">Sessions</span></div>
+      <div class="stat"><b id="lg-touches">0</b><span class="small">Touches</span></div>
+      <div class="stat"><b id="lg-best">0</b><span class="small">🔥 Beste Serie</span></div>
+    </div>
+    <div id="lg-list" style="margin-top:10px"></div>
+  </div>
+
+</div>
+<div id="toast"></div>
+<canvas id="cf"></canvas>
+
+<script>
+'use strict';
+(function(){
+/* ---------- Speicher ---------- */
+var LS='ft1000data', TAGE=86400000;
+function today(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function defaultData(){
+  return {
+    exercises:[
+      {id:'x1',name:'Sohlenwippen (alternierend)',reps:150,emo:'👟',vid:null},
+      {id:'x2',name:'Tic-Tac (innere/spanische Ferse)',reps:150,emo:'⚡',vid:null},
+      {id:'x3',name:'Dribbling Slalom (im Lauf)',reps:200,emo:'🌀',vid:null},
+      {id:'x4',name:'An- und Mitnehmen (beide Füße)',reps:150,emo:'🎯',vid:null},
+      {id:'x5',name:'Über den Ball tippen (vorne/hinten)',reps:150,emo:'🔁',vid:null},
+      {id:'x6',name:'Überstieg / Schere',reps:100,emo:'✂️',vid:null},
+      {id:'x7',name:'Passen gegen die Wand',reps:200,emo:'🧱',vid:null}
+    ],
+    xp:0, totalTouches:0, streak:0, best:0, lastDay:null,
+    sessions:[], badges:{}
+  };
+}
+var db;
+try{ db=JSON.parse(localStorage.getItem(LS))||defaultData(); }catch(e){ db=defaultData(); }
+if(!db.exercises)db=defaultData();
+function save(){ try{localStorage.setItem(LS,JSON.stringify(db));}catch(e){} }
+
+/* ---------- Videos in IndexedDB ---------- */
+var VDB='ft1000vids';
+function vidDB(){ return new Promise(function(res,rej){
+  var r=indexedDB.open(VDB,1);
+  r.onupgradeneeded=function(){ r.result.createObjectStore('v'); };
+  r.onsuccess=function(){ res(r.result); };
+  r.onerror=function(){ rej(r.error); };
+});}
+function vidPut(key,blob){ return vidDB().then(function(d){ return new Promise(function(res,rej){
+  var tx=d.transaction('v','readwrite'); tx.objectStore('v').put(blob,key);
+  tx.oncomplete=function(){d.close();res();}; tx.onerror=function(){rej(tx.error);};
+});}); }
+function vidGet(key){ return vidDB().then(function(d){ return new Promise(function(res,rej){
+  var q=d.transaction('v').objectStore('v').get(key);
+  q.onsuccess=function(){d.close();res(q.result||null);}; q.onerror=function(){rej(q.error);};
+});}); }
+
+/* ---------- Level & Motivation ---------- */
+var LEVELS=[['Anfänger',0],['Banker',300],['Einwechsler',800],['Stammspieler',1600],['Kapitän',3000],[' Nationalspieler',5000],['Legende',8000],['Weltklasse',13000],['Ballartist',20000],['Unsterblich',30000]];
+function levelOf(xp){ var l=0; for(var i=0;i<LEVELS.length;i++) if(xp>=LEVELS[i][1]) l=i; return l; }
+function levelName(l){ return LEVELS[l][0].trim(); }
+var SPRUCHE=[
+ 'Wer heute trainiert, gewinnt morgen. 💪',
+ '1000 Berührungen = 1000 Gründe, besser zu werden.',
+ 'Cristiano macht das auch nicht freiwillig… doch, doch! 😄',
+ 'Schwitzen im Training, lächeln im Spiel.',
+ 'Kleine Schritte, großer Fußball. ⚽',
+ 'Deine Füße merken sich, was du ihnen gibst.',
+ 'Kein Talent schlägt Fleiß, wenn Talent nicht arbeitet.'
+];
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._h); toast._h=setTimeout(function(){t.classList.remove('show');},1800); }
+function vibrate(ms){ try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){} }
+
+/* ---------- Views ---------- */
+var views=['home','train','end','pick','editor','edit','log'], current='home';
+function $(id){return document.getElementById(id);}
+function show(v){ current=v; views.forEach(function(x){ $('v-'+x).classList.toggle('active',x===v); }); window.scrollTo(0,0); }
+Array.prototype.forEach.call(document.querySelectorAll('[data-home]'),function(b){ b.addEventListener('click',goHome); });
+function goHome(){ stopVid(); show('home'); renderHome(); }
+
+/* ---------- Home ---------- */
+function todaysTouches(){
+  var n=0; db.sessions.forEach(function(s){ if(s.date===today()) n+=s.touches; }); return n;
+}
+function touchStreak(){
+  if(db.lastDay!==today()){ /* Serie haelt bis morgen */ }
+  return db.streak;
+}
+function renderHome(){
+  var t=todaysTouches();
+  $('h-count').innerHTML=t+' <small>/ 1000</small>';
+  $('h-bar').style.width=Math.min(100,t/10)+'%';
+  $('h-quote').textContent=SPRUCHE[new Date().getDate()%SPRUCHE.length];
+  $('h-streak').textContent=db.streak;
+  var l=levelOf(db.xp);
+  $('h-level').textContent=l+1;
+  $('h-total').textContent=db.totalTouches.toLocaleString('de-DE');
+  $('h-lvlname').textContent='⭐ '+levelName(l);
+  var next=l+1<LEVELS.length?LEVELS[l+1][1]:null;
+  $('h-xptxt').textContent=next?(db.xp+' / '+next+' XP'):'MAX';
+  $('h-xpbar').style.width=next?Math.min(100,(db.xp-LEVELS[l][1])/(next-LEVELS[l][1])*100)+'%':'100%';
+  var mix=$('home-mix');
+  if(t>=1000){ mix.textContent='✅ Tag geschafft! Extra-Session 🔥'; }
+  else if(t>0){ mix.textContent='🚀 Weiter bis 1000 ('+(1000-t)+' fehlen)'; }
+  else{ mix.textContent='🚀 1000er-Mix starten'; }
+}
+$('home-mix').addEventListener('click',function(){ startSession('mix'); });
+$('home-pick').addEventListener('click',function(){ renderPick(); show('pick'); });
+$('home-editor').addEventListener('click',function(){ renderEditor(); show('editor'); });
+$('home-log').addEventListener('click',function(){ renderLog(); show('log'); });
+
+/* ---------- Session-Engine ---------- */
+var S=null; /* {queue:[{ex,reps}],qi,hit,done,total,mode} */
+var urlCache={};
+function buildQueue(mode){
+  var pool=db.exercises.slice();
+  if(mode==='pick'){ pool=pool.filter(function(x){return PICK[x.id];}); }
+  if(!pool.length) return null;
+  var q=[],sum=0;
+  while(sum<1000){
+    var list=(mode==='mix')?pool.slice().sort(function(){return Math.random()-.5;}):pool.slice();
+    for(var i=0;i<list.length&&sum<1000;i++){
+      var ex=list[i], reps=ex.reps;
+      if(sum+reps>1000) reps=1000-sum; /* letzte Uebung wird gekuerzt */
+      q.push({ex:ex,reps:reps}); sum+=reps;
+    }
+  }
+  return q;
+}
+function startSession(mode,pre){
+  var q=pre||buildQueue(mode);
+  if(!q){ alert('Lege zuerst mindestens eine Übung an! 📋'); renderEditor(); show('editor'); return; }
+  S={queue:q,qi:0,hit:0,total:0,done:0,mode:mode};
+  show('train'); renderTrain();
+}
+function exNow(){ return S.queue[S.qi]; }
+function renderTrain(){
+  if(!S)return;
+  var e=exNow();
+  $('t-oftxt').textContent='Übung '+(S.qi+1)+'/'+S.queue.length;
+  $('t-exname').textContent=e.ex.emo+' '+e.ex.name;
+  $('t-exreps').textContent='Ziel: '+e.reps+' Berührungen';
+  $('t-goal').textContent='/'+e.reps;
+  updateTrainCounts();
+  loadVid(e.ex);
+}
+function updateTrainCounts(){
+  var e=exNow();
+  $('t-cur').textContent=S.hit;
+  $('t-exbar').style.width=Math.min(100,S.hit/e.reps*100)+'%';
+  var todayNow=todaysTouches()+S.total;
+  $('t-total').textContent=todayNow;
+  $('t-totbar').style.width=Math.min(100,todayNow/10)+'%';
+}
+function loadVid(ex){
+  var v=$('t-vid'), n=$('t-novid');
+  if(!ex.vid){ v.style.display='none'; n.style.display=''; n.textContent=ex.emo; stopVid(); return; }
+  var go=function(url){ v.src=url; v.style.display=''; n.style.display='none';
+    v.play().catch(function(){}); };
+  if(urlCache[ex.vid]) go(urlCache[ex.vid]);
+  else vidGet(ex.vid).then(function(b){ if(!b){go2();return;} var u=URL.createObjectURL(b); urlCache[ex.vid]=u; go(u);
+  }).catch(go2);
+  function go2(){ v.style.display='none'; n.style.display=''; n.textContent=ex.emo; }
+}
+function stopVid(){ var v=$('t-vid'); try{v.pause();}catch(e){} }
+var MILES={250:'250! Guter Start! 💨',500:'Halbzeit! 500 Berührungen! 💪',750:'750! Nur noch ein Sprint! 🔥'};
+$('t-hit').addEventListener('click',function(){
+  if(!S||S.lock)return;
+  S.hit++; S.total++;
+  vibrate(12);
+  var btn=$('t-hit'); btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop');
+  var todayNow=todaysTouches()+S.total;
+  if(MILES[todayNow]&&!S['m'+todayNow]){ S['m'+todayNow]=1; toast(MILES[todayNow]); vibrate([30,40,30]); }
+  if(S.hit>=exNow().reps){ finishExercise(); return; }
+  updateTrainCounts();
+});
+$('t-undo').addEventListener('click',function(){
+  if(!S||S.hit<=0)return;
+  S.hit--; S.total=Math.max(0,S.total-1); updateTrainCounts();
+});
+$('t-skip').addEventListener('click',function(){
+  if(!S||S.lock)return;
+  toast('Übung übersprungen — weiter! 👟'); nextExercise();
+});
+function finishExercise(){
+  S.lock=true;
+  updateTrainCounts();
+  vibrate([20,30,20,30,60]);
+  var names=['SAUBER! ✅','STARK! 💪','PERFEKT! 🎯','WEITER SO! 🔥','GENAU SO! ⚡'];
+  toast(names[S.qi%names.length]+' ('+S.queue.length+'-'+(S.qi+1)+')');
+  setTimeout(function(){ if(S){ S.lock=false; nextExercise(); } },900);
+}
+function nextExercise(){
+  if(!S)return;
+  if(S.qi+1>=S.queue.length){ endSession(); return; }
+  S.qi++; S.hit=0; renderTrain();
+}
+$('t-abort').addEventListener('click',function(){
+  if(!S)return;
+  if(S.total>0 && !confirm('Session abbrechen? Deine '+S.total+' Berührungen werden gespeichert.')) return;
+  if(S.total>0) commitSession(false);
+  S=null; goHome();
+});
+
+/* ---------- Abschluss / Gamification ---------- */
+var BADGES=[
+  {id:'first',emo:'🥇',name:'Erste Session',ok:function(){return db.sessions.length>=1;}},
+  {id:'k1',emo:'💯',name:'1000er-Tag',ok:function(){return todaysTouches()>=1000;}},
+  {id:'s3',emo:'🔥',name:'3-Tage-Serie',ok:function(){return db.streak>=3;}},
+  {id:'s7',emo:'🌋',name:'7-Tage-Serie',ok:function(){return db.streak>=7;}},
+  {id:'t5k',emo:'⚽',name:'5000 Touches',ok:function(){return db.totalTouches>=5000;}},
+  {id:'t25k',emo:'🏆',name:'25.000 Touches',ok:function(){return db.totalTouches>=25000;}},
+  {id:'night',emo:'🌙',name:'Nacht-Einheit',ok:function(){var h=new Date().getHours();return h>=21||h<6;}},
+  {id:'early',emo:'🌅',name:'Frühschicht',ok:function(){var h=new Date().getHours();return h>=5&&h<8;}}
+];
+function commitSession(complete){
+  var xp=S.total;
+  var before=levelOf(db.xp);
+  db.xp+=xp; db.totalTouches+=xp;
+  if(db.lastDay!==today()){
+    var y=new Date(); y.setDate(y.getDate()-1);
+    var ystr=y.getFullYear()+'-'+(y.getMonth()+1)+'-'+y.getDate();
+    db.streak=(db.lastDay===ystr)?db.streak+1:1;
+    db.lastDay=today(); db.best=Math.max(db.best||0,db.streak);
+  }
+  db.sessions.unshift({date:today(),ts:Date.now(),touches:S.total,complete:complete,
+    ex:S.queue.map(function(q){return q.ex.emo;}).join('')});
+  if(db.sessions.length>200)db.sessions.length=200;
+  save();
+  var after=levelOf(db.xp);
+  var newBadges=[];
+  BADGES.forEach(function(b){ if(b.ok()&&!db.badges[b.id]){ db.badges[b.id]=1; newBadges.push(b); } });
+  save();
+  return {xp:xp,levelUp:after>before,newBadges:newBadges};
+}
+function endSession(){
+  stopVid();
+  var r=commitSession(true);
+  $('e-touches').textContent=S.total;
+  $('e-xp').textContent='+'+r.xp;
+  $('e-streak').textContent=db.streak;
+  var t=todaysTouches();
+  var full=t>=1000;
+  $('e-title').textContent=full?'1000 GESCHAFFT! 🏆':'Starke Einheit!';
+  $('e-sub').textContent=full?'Heute: '+t+' Berührungen. Coach-Punkt für dich!':'Heute: '+t+' von 1000. Bleib dran!';
+  $('e-emoji').textContent=full?'🏆':'👏';
+  $('e-levelup').style.display=r.levelUp?'':'none';
+  var bh=''; r.newBadges.forEach(function(b){ bh+='<span class="badge">'+b.emo+' '+b.name+'</span>'; });
+  $('e-badges').innerHTML=bh;
+  S=null;
+  show('end');
+  if(full) confetti();
+  vibrate(full?[50,50,50,50,150]:[30,30,30]);
+}
+$('e-again').addEventListener('click',function(){ startSession(S?'mix':(lastMode||'mix')); });
+$('e-home').addEventListener('click',goHome);
+var lastMode='mix';
+var _start=startSession;
+startSession=function(mode,pre){ lastMode=mode; _start(mode,pre); };
+
+/* ---------- Confetti ---------- */
+function confetti(){
+  var c=$('cf'),x=c.getContext('2d');
+  c.width=innerWidth;c.height=innerHeight;c.style.display='block';
+  var cols=['#ff9f0a','#1fa15c','#ffd24a','#35c279','#e0393e','#4a90d9'],ps=[];
+  for(var i=0;i<160;i++)ps.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*.5,
+    vx:(Math.random()-.5)*3,vy:2+Math.random()*4,r:3+Math.random()*5,
+    c:cols[i%cols.length],a:Math.random()*6});
+  var t0=Date.now();
+  (function anim(){
+    var dt=(Date.now()-t0)/1000;
+    x.clearRect(0,0,c.width,c.height);
+    ps.forEach(function(p){ p.x+=p.vx;p.y+=p.vy;p.a+=.1;
+      x.save();x.translate(p.x,p.y);x.rotate(p.a);x.fillStyle=p.c;
+      x.fillRect(-p.r/2,-p.r/2,p.r,p.r*1.6);x.restore(); });
+    if(dt<3.2)requestAnimationFrame(anim); else c.style.display='none';
+  })();
+}
+
+/* ---------- Uebungs-Auswahl ---------- */
+var PICK={};
+function renderPick(){
+  var h='';
+  db.exercises.forEach(function(ex){
+    if(PICK[ex.id]===undefined)PICK[ex.id]=true;
+    h+='<label class="exrow" style="cursor:pointer"><input type="checkbox" data-pk="'+ex.id+'" '+(PICK[ex.id]?'checked':'')+'>'
+      +'<span class="ic">'+ex.emo+'</span><span class="t"><b>'+esc(ex.name)+'</b><span class="small">'+ex.reps+' Berührungen'+(ex.vid?' · 🎬 Video':'')+'</span></span></label>';
+  });
+  $('pk-list').innerHTML=h||'<p class="small">Noch keine Übungen.</p>';
+  Array.prototype.forEach.call($('pk-list').querySelectorAll('[data-pk]'),function(cb){
+    cb.addEventListener('change',function(){ PICK[cb.dataset.pk]=cb.checked; });
+  });
+}
+$('pk-start').addEventListener('click',function(){ startSession('pick'); });
+
+/* ---------- Editor ---------- */
+function renderEditor(){
+  var h='';
+  db.exercises.forEach(function(ex,i){
+    h+='<div class="exrow"><span class="ic">'+ex.emo+'</span><span class="t"><b>'+esc(ex.name)+'</b>'
+      +'<span class="small">'+ex.reps+' Berührungen'+(ex.vid?' · 🎬 Video':'')+'</span></span>'
+      +'<button class="btn ghost small" data-edit="'+i+'">✏️</button>'
+      +'<button class="btn red small" data-del="'+i+'">🗑</button></div>';
+  });
+  $('ed-list').innerHTML=h||'<p class="small">Noch keine Übungen. Lege die erste an! 👆</p>';
+  Array.prototype.forEach.call($('ed-list').querySelectorAll('[data-edit]'),function(b){
+    b.addEventListener('click',function(){ openEdit(parseInt(b.dataset.edit,10)); });
+  });
+  Array.prototype.forEach.call($('ed-list').querySelectorAll('[data-del]'),function(b){
+    b.addEventListener('click',function(){
+      var ex=db.exercises[parseInt(b.dataset.del,10)];
+      if(!confirm('Übung „'+ex.name+'“ löschen?'))return;
+      db.exercises.splice(parseInt(b.dataset.del,10),1); save(); renderEditor();
+    });
+  });
+}
+$('ed-new').addEventListener('click',function(){ openEdit(-1); });
+var EF={idx:-1,emo:'⚽',vidKey:null,vidBlob:null};
+var EMOS=['⚽','👟','⚡','🌀','🎯','🔁','✂️','🧱','🔥','🥅','🐆','🦅','💨','🤹','⭐'];
+(function(){
+  var h='';
+  EMOS.forEach(function(e){ h+='<span class="chip" data-emo="'+e+'">'+e+'</span>'; });
+  $('ef-emos').innerHTML=h;
+  Array.prototype.forEach.call($('ef-emos').querySelectorAll('[data-emo]'),function(c){
+    c.addEventListener('click',function(){
+      EF.emo=c.dataset.emo;
+      Array.prototype.forEach.call($('ef-emos').querySelectorAll('[data-emo]'),function(x){x.classList.toggle('on',x===c);});
+    });
+  });
+})();
+function openEdit(i){
+  EF.idx=i; EF.vidBlob=null;
+  var ex=i>=0?db.exercises[i]:null;
+  $('ef-title').textContent=ex?'Übung bearbeiten':'Neue Übung';
+  $('ef-name').value=ex?ex.name:'';
+  $('ef-reps').value=ex?ex.reps:150;
+  EF.emo=ex?ex.emo:'⚽';
+  Array.prototype.forEach.call($('ef-emos').querySelectorAll('[data-emo]'),function(x){x.classList.toggle('on',x.dataset.emo===EF.emo);});
+  EF.vidKey=ex?ex.vid:null;
+  $('ef-del').style.display=ex?'':'none';
+  $('ef-vidinfo').textContent=ex&&ex.vid?'✓ Video ist gespeichert':'Noch kein Video';
+  var p=$('ef-prev'); p.style.display='none'; p.removeAttribute('src');
+  if(ex&&ex.vid){
+    vidGet(ex.vid).then(function(b){ if(b){ var u=URL.createObjectURL(b); p.src=u; p.style.display=''; } });
+  }
+  show('edit');
+}
+$('ef-back').addEventListener('click',function(){ renderEditor(); show('editor'); });
+$('ef-filebtn').addEventListener('click',function(){ $('ef-file').click(); });
+$('ef-file').addEventListener('change',function(){
+  var f=this.files&&this.files[0]; if(!f)return;
+  if(f.size>60*1024*1024){ alert('Video ist größer als 60 MB — bitte kürzer filmen.'); return; }
+  EF.vidBlob=f; EF.vidKey='v'+Date.now();
+  var p=$('ef-prev'); p.src=URL.createObjectURL(f); p.style.display='';
+  $('ef-vidinfo').textContent='Neues Video: '+(f.size/1024/1024).toFixed(1)+' MB — wird beim Speichern gesichert';
+});
+$('ef-save').addEventListener('click',function(){
+  var name=$('ef-name').value.trim();
+  if(!name){ alert('Bitte einen Namen eingeben.'); return; }
+  var reps=parseInt($('ef-reps').value,10);
+  if(!(reps>=100&&reps<=300)){ alert('Berührungen pro Satz: 100 bis 300.'); return; }
+  var ex={id:(EF.idx>=0?db.exercises[EF.idx].id:'x'+Date.now()),name:name,reps:reps,emo:EF.emo,vid:EF.vidKey};
+  var done=function(){
+    if(EF.idx>=0)db.exercises[EF.idx]=ex; else db.exercises.push(ex);
+    save(); toast('Übung gespeichert ✅'); renderEditor(); show('editor');
+  };
+  if(EF.vidBlob){ vidPut(ex.vid,EF.vidBlob).then(done).catch(function(){ alert('Video konnte nicht gespeichert werden.'); }); }
+  else done();
+});
+$('ef-del').addEventListener('click',function(){
+  if(EF.idx<0)return;
+  var ex=db.exercises[EF.idx];
+  if(!confirm('Übung „'+ex.name+'“ löschen?'))return;
+  if(ex.vid){ vidDB().then(function(d){ var tx=d.transaction('v','readwrite'); tx.objectStore('v').delete(ex.vid); }); }
+  db.exercises.splice(EF.idx,1); save(); renderEditor(); show('editor');
+});
+
+/* ---------- Log ---------- */
+function renderLog(){
+  $('lg-sessions').textContent=db.sessions.length;
+  $('lg-touches').textContent=db.totalTouches.toLocaleString('de-DE');
+  $('lg-best').textContent=db.best||0;
+  var h='',lastDate='';
+  db.sessions.forEach(function(s){
+    var d=new Date(s.ts);
+    var dstr=d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});
+    if(dstr!==lastDate){ h+='<div class="small" style="margin:10px 2px 2px;font-weight:700">'+dstr+'</div>'; lastDate=dstr; }
+    h+='<div class="card" style="padding:10px 12px;margin:6px 0;display:flex;align-items:center;gap:8px">'
+      +'<span style="font-size:1.2rem">'+(s.complete?'✅':'👟')+'</span>'
+      +'<span style="flex:1"><b>'+s.touches+' Touches</b><div class="small">'+s.ex+'</div></span>'
+      +'<span class="small">'+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})+'</span></div>';
+  });
+  $('lg-list').innerHTML=h||'<div class="card"><p class="small center" style="margin:6px">Noch keine Sessions — leg los! ⚽</p></div>';
+}
+
+/* ---------- Start ---------- */
+function esc(x){ var d=document.createElement('div'); d.textContent=x==null?'':String(x); return d.innerHTML; }
+renderHome();
+})();
+</script>
+</body>
+</html>
